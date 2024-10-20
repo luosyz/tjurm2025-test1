@@ -1,4 +1,6 @@
 #include "tests.h"
+#include<iostream>
+#include<vector>
 
 // 练习1，实现库函数strlen
 int my_strlen(char *str) {
@@ -7,7 +9,17 @@ int my_strlen(char *str) {
      */
 
     // IMPLEMENT YOUR CODE HERE
-    return 0;
+    int a=0;
+    while(*str!='\0')
+    {
+        a++;
+        str++;
+    }
+    std::cout<<a<<"\n";
+    
+
+    return a;
+    
 }
 
 
@@ -19,6 +31,17 @@ void my_strcat(char *str_1, char *str_2) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+    while(*str_1!=0)
+    {
+        str_1++;
+    }
+    while(*str_2!=0)
+    {
+     *str_1=*str_2;
+      str_2++;
+      str_1++; 
+    }
+    *str_1='\0';
 }
 
 
@@ -31,7 +54,26 @@ char* my_strstr(char *s, char *p) {
      */
 
     // IMPLEMENT YOUR CODE HERE
-    return 0;
+    char first=p[0];
+    for(char*i=s;*i!='\0';i++)
+    { 
+        if(*i==first)
+        {
+          char*s1=i;
+          char*p1=p;
+          while(*p1!='\0'&&*s1==*p1)
+          {
+            s1++;
+            p1++;
+          }
+          if(*p1=='\0')return i;
+          else return NULL;
+        }
+          
+
+    }
+  
+    
 }
 
 
@@ -96,6 +138,18 @@ void rgb2gray(float *in, float *out, int h, int w) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+  for(int i=0;i<h;i++)
+  {
+    for(int j=0;j<w;j++)
+    {
+        int cai=(i*w+j)*3;
+        float hui=in[cai]*0.1140+in[cai+1]*0.5870+in[cai+2]*0.2989;
+        out[i*w+j]=hui;
+    }
+
+
+  }
+    
     // ...
 }
 
@@ -189,7 +243,7 @@ void resize(float *in, float *out, int h, int w, int c, float scale) {
      * HINT:
      *     1. 对于每个 dst 中的像素点 (x, y)，先计算出其在 src 中的坐标 float(x0, y0)，
      *     2. 然后计算出其在 src 中的四个邻居点:
-     *        x1 = static_cast<int>(x0), y1 = static_cast<int>(y0)
+     *        , y1 = static_cast<int>(y0)
      *        上面这样可以直接将 float 通过下取整的方式转换为 int，
      *        剩下三个邻居就好找了
      *     3. 注意上面的方法中，四个邻居点的坐标可能会超出 src 的范围，
@@ -198,12 +252,47 @@ void resize(float *in, float *out, int h, int w, int c, float scale) {
 
     int new_h = h * scale, new_w = w * scale;
     // IMPLEMENT YOUR CODE HERE
+#include <iostream>
 
+// 单线性插值法实现图像的缩放
+
+   
+
+    for (int i = 0; i < new_h; i++) {
+        for (int j = 0; j < new_w; j++) {
+            
+            float x = j / scale;
+            float y = i / scale;
+
+            // 计算插值点的整数和小数部分
+            int x1 = x < static_cast<float>(w - 1) ? static_cast<int>(x) : w - 1;
+            int y1 = y < static_cast<float>(h - 1) ? static_cast<int>(y) : h - 1;
+            int x2 = (x1 + 1) < w ? x1 + 1 : x1;
+            int y2 = (y1 + 1) < h ? y1 + 1 : y1;
+
+            for (int k = 0; k < c; k++) {
+           
+                float dx = x - x1;
+                float dy = y - y1;
+                float q11 = in[(y1 * w + x1) * c + k];
+                float q21 = in[(y1 * w + x2) * c + k];
+                float q12 = in[(y2 * w + x1) * c + k];
+                float q22 = in[(y2 * w + x2) * c + k];
+
+                out[(i * new_w + j) * c + k] = (1 - dx) * (1 - dy) * q11 +
+                                                dx * (1 - dy) * q21 +
+                                                (1 - dx) * dy * q12 +
+                                                dx * dy * q22;
+            }
+        }
+    }
 }
 
 
+
+
 // 练习6，实现图像处理算法：直方图均衡化
-void hist_eq(float *in, int h, int w) {
+void hist_eq(float *in,int h, int w) {
     /**
      * 将输入图片进行直方图均衡化处理。参数含义：
      * (1) float *in: 输入的灰度图片。
@@ -221,4 +310,36 @@ void hist_eq(float *in, int h, int w) {
      */
 
     // IMPLEMENT YOUR CODE HERE
+     std::vector<int> histogram(256, 0);
+   
+    std::vector<int> cdf(256, 0);
+    int totalPixels = h * w;
+
+ 
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int pixelValue = static_cast<int>(in[i * w + j]);
+            histogram[pixelValue]++;
+        }
+    }
+
+
+    int cdfValue = 0;
+    for (int i = 0; i < 256; ++i) {
+        cdfValue += histogram[i];
+        cdf[i] = cdfValue;
+    }
+
+    for (int i = 0; i < 256; ++i) {
+        cdf[i] = static_cast<int>((cdf[i] * 255) / totalPixels);
+    }
+
+    
+    for (int i = 0; i < h; ++i) {
+        for (int j = 0; j < w; ++j) {
+            int pixelValue = static_cast<int>(in[i * w + j]);
+            in[i * w + j] = static_cast<float>(cdf[pixelValue]);
+        }
+    }
 }
+
